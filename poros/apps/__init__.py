@@ -15,6 +15,7 @@ def create_app(config_filename: str = 'conf.settings'):
     configure_logger(app)
     filter_warning()
     register_json_encoder(app)
+    register_blueprints(app)
     return app
 
 
@@ -42,3 +43,8 @@ def register_json_encoder(app):
     """
     from util.base_util import DateAndObjectIdEncoder
     app.json_encoder = DateAndObjectIdEncoder
+
+
+def register_blueprints(app):
+    from views import register_blueprints_views
+    register_blueprints_views(app)
