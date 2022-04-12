@@ -1,5 +1,7 @@
-from flask import Flask
+from flask import Flask, request
 import logging
+
+from util.profile import Profiler
 
 
 def create_app(config_filename: str = 'conf.settings'):
@@ -16,6 +18,8 @@ def create_app(config_filename: str = 'conf.settings'):
     filter_warning()
     register_json_encoder(app)
     register_blueprints(app)
+    register_redis(app)
+    register_request_handle(app)
     return app
 
 
@@ -48,3 +52,34 @@ def register_json_encoder(app):
 def register_blueprints(app):
     from views import register_blueprints_views
     register_blueprints_views(app)
+    
+
+def register_redis(app):
+    from redis import Redis
+    cfg = app.config['REDIS_SETTINGS']
+    app.redis = Redis(**cfg, max_connections=20)
+    app.redis_decode = Redis(**cfg, decode_responses=True, max_connections=30)
+
+
+def register_request_handle(app):
+    app.before_request(before_request)
+    app.after_request(after_request)
+
+
+def before_request():
+    try:
+        request.pr = Profiler.get_profiler(request.path)
+    except:
+        request.pr = None
+
+
+def after_request(resp):
+    try:
+        if resp.status.startswith('200 '):
+            pr = getattr(request, 'pr', None)
+            if pr:
+                pr.disable()
+                Profiler.end(request.path, pr)
+    except Exception:
+        pass
+    return resp
