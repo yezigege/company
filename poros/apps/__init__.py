@@ -20,6 +20,7 @@ def create_app(config_filename: str = 'conf.settings'):
     register_blueprints(app)
     register_redis(app)
     register_request_handle(app)
+    register_apispec(app)
     return app
 
 
@@ -52,7 +53,7 @@ def register_json_encoder(app):
 def register_blueprints(app):
     from views import register_blueprints_views
     register_blueprints_views(app)
-    
+
 
 def register_redis(app):
     from redis import Redis
@@ -83,3 +84,28 @@ def after_request(resp):
     except Exception:
         pass
     return resp
+
+
+def register_apispec(app):
+    from apispec import APISpec
+    from apispec.ext.marshmallow import MarshmallowPlugin
+    from util.flask_apispec import FlaskPlugin, FlaskApiSpec
+    from webargs.flaskparser import FlaskParser
+    from marshmallow import EXCLUDE
+
+    class Parser(FlaskParser):
+        DEFAULT_UNKNOWN_BY_LOCATION = {"json": EXCLUDE}
+
+    app.config.update({
+        'APISPEC_SPEC': APISpec(
+            title="POROS",
+            version="1.0.0",
+            openapi_version="2.0",
+            info=dict(description="POROS API"),
+            plugins=[FlaskPlugin(), MarshmallowPlugin()],
+        ),
+        'APISPEC_FORMAT_RESPONSE': None,
+        'APISPEC_WEBARGS_PARSER': Parser(),
+    })
+    docs = FlaskApiSpec(app, document_options=False)
+    docs.register_existing_resources()
