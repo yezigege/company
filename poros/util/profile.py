@@ -12,7 +12,7 @@ COMMIT = os.environ.get('COMMIT_SHORT_SHA', '00000000')
 
 
 class FixLenQueue:
-    """使用一个redis的集合记录超时函数
+    """使用一个redis的集合记录单个接口最近10次每次接口访问总耗时
     
     http://redisdoc.com/script/eval.html?highlight=call
     """
@@ -72,6 +72,7 @@ class Profiler:
 
     @classmethod
     def get_profiler(cls, entry):
+        """判断是否开始分析，并依据返回分析器对象"""
         if not cls.enter(entry):
             return None
         cls.ENTRIES[entry] = cls.ENTRIES.get(entry, 0) + 1
@@ -84,16 +85,17 @@ class Profiler:
         # if BRANCH != 'build_prod':  # 限定特殊分支 build_prod 来分析程序
         #     return False
         last_ts = cls.ENTRIES.get(entry, 0)
-        if last_ts > 0 and not cls.UPDATE:
+        if last_ts > 0 and not cls.UPDATE:  # 是否重新分析该接口
             return False
         now = int(time.time())
-        if last_ts + cls.UPDATE_INTERVAL > now:
+        if last_ts + cls.UPDATE_INTERVAL > now:  # 300 s内多次调用不重新分析该接口的性能
             return False
         cls.ENTRIES[entry] = now
         return True
 
     @classmethod
     def valuable_line(cls, line):
+        """丢弃不需要分析的部分包"""
         for tag in cls.TAGS:
             if tag in line:
                 return False
@@ -101,6 +103,7 @@ class Profiler:
 
     @classmethod
     def handle_result(cls, entry, rs):
+        """重组分析结果并存储到 redis 中"""
         content = '\n'.join(
             line.strip() for line in rs.split('\n') if cls.valuable_line(line))
         FixLenQueue.add(COMMIT, entry, content)
