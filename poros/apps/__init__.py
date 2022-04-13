@@ -1,5 +1,6 @@
 from flask import Flask, request
 import logging
+import ujson as json  # https://yanbin.blog/python-json-choose-ujson-if-necessary/
 
 from util.profile import Profiler
 
@@ -21,6 +22,7 @@ def create_app(config_filename: str = 'conf.settings'):
     register_redis(app)
     register_request_handle(app)
     register_apispec(app)
+    register_errorhandler(app)
     return app
 
 
@@ -109,3 +111,33 @@ def register_apispec(app):
     })
     docs = FlaskApiSpec(app, document_options=False)
     docs.register_existing_resources()
+
+
+def register_errorhandler(app):
+    """Register error handlers."""
+    import traceback
+
+    from werkzeug.exceptions import HTTPException, UnprocessableEntity
+
+    from errors import BaseError
+    from util import response_util
+    from log_config import logger_error
+
+    def handle_error(e):
+        # flask_apispec 请求参数错误处理
+        if isinstance(e, UnprocessableEntity) and e.code == 422:
+            return response_util.response((1999, json.dumps(e.data.get('messages', {}))))
+        if isinstance(e, HTTPException) and e.code != 500:
+            return str(e), e.code
+        elif isinstance(e, BaseError):
+            return response_util.response((e.code, str(e.message)), data=e.data)
+        app.logger.info(e, exc_info=True)
+        # 获取堆栈打印结果并记录到错误日志中
+        # https://blog.csdn.net/yuanfate/article/details/119916008
+        logger_error.error(traceback.format_exc())
+        return response_util.response(response_util.RetCodeAndMessage.Fail)
+
+    # 自定义错误处理器。拦截所有错误信息
+    # https://dormousehole.readthedocs.io/en/latest/errorhandling.html?highlight=errorhandler#id6
+    app.errorhandler(Exception)(handle_error)
+    return None
