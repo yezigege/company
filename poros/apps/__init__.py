@@ -23,6 +23,7 @@ def create_app(config_filename: str = 'conf.settings'):
     register_request_handle(app)
     register_apispec(app)
     register_errorhandler(app)
+    register_sentry(app)
     return app
 
 
@@ -141,3 +142,15 @@ def register_errorhandler(app):
     # https://dormousehole.readthedocs.io/en/latest/errorhandling.html?highlight=errorhandler#id6
     app.errorhandler(Exception)(handle_error)
     return None
+
+
+def register_sentry(app):
+    import sentry_sdk
+    from sentry_sdk.integrations.flask import FlaskIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+    if app.config.get('SENTRY_DSN'):
+        sentry_sdk.init(
+            dsn=app.config['SENTRY_DSN'],
+            integrations=[FlaskIntegration(), CeleryIntegration(), RedisIntegration()],
+        )

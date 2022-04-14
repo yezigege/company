@@ -18,3 +18,6 @@ REDIS_SETTINGS = {
     'db': 1,
     'password': REDIS_PSWD
 }
+
+# sentry dsn 配置
+SENTRY_DSN = 'https://a9c59ec4954b4c748f155623c92f0ee4@o1203607.ingest.sentry.io/6330184'

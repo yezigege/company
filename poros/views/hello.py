@@ -22,3 +22,10 @@ def hello(name: str, gender: int):
         raise BaseError(RetCodeAndMessage.Hello.HelloOther)
     return {"info": f"name: {name}, gender: {gender}"}
     # return response(RetCodeAndMessage.Success)
+
+
+@hello_bp.route('/sentry', methods=['GET'])
+def sentry():
+    """用来测试 sentry 异常记录框架"""
+    division_by_zero = 1 / 0
+    return {division_by_zero: division_by_zero}
