@@ -154,3 +154,19 @@ def register_sentry(app):
             dsn=app.config['SENTRY_DSN'],
             integrations=[FlaskIntegration(), CeleryIntegration(), RedisIntegration()],
         )
+
+
+def register_extensions(app):
+    # 缓存插件
+    # https://www.cnblogs.com/cwp-bg/p/9687005.html
+    from apps.extensions import cache
+    cache.init_app(app, config={'CACHE_TYPE': 'redis'})
+    
+    from tasks import celery_app
+    register_celery(app, celery_app)
+    
+
+def register_celery(app, celery_app):
+    from conf import config_celery
+    celery_app.config_from_object(config_celery)
+    celery_app.conf.update(app.config)

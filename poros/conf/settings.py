@@ -1,7 +1,3 @@
-from distutils.debug import DEBUG
-from distutils.log import INFO
-
-
 DEBUG=True
 
 # 记录日志级别
@@ -11,12 +7,26 @@ LOG_LEVEL='INFO'
 REDIS_HOST = '127.0.0.1'
 REDIS_PSWD = 'redis'
 
+# Flask Caching 配置
+CACHE_REDIS_HOST = REDIS_HOST
+CACHE_REDIS_PORT = 6379
+CACHE_REDIS_PASSWORD = REDIS_PSWD
+CACHE_REDIS_DB = 2
+
 # redis连接配置
 REDIS_SETTINGS = {
     'host': REDIS_HOST,
     'port': 6379,
     'db': 1,
     'password': REDIS_PSWD
+}
+
+# celery 链接配置
+CELERY_REDIS_SETTINGS = {
+    'host': '127.0.0.1',
+    'port': 6379,
+    'db': 2,
+    'password': ''
 }
 
 # sentry dsn 配置
