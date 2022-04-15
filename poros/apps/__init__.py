@@ -24,6 +24,7 @@ def create_app(config_filename: str = 'conf.settings'):
     register_apispec(app)
     register_errorhandler(app)
     register_sentry(app)
+    register_extensions(app)
     return app
 
 

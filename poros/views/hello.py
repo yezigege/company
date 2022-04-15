@@ -1,3 +1,4 @@
+from gzip import READ
 from flask_apispec import use_kwargs
 from marshmallow import fields, validate
 
@@ -6,6 +7,7 @@ from schema import hello_schema
 from util.blueprint import RootBlueprint
 from util.flask_apispec import marshal_with
 from util.response_util import RetCodeAndMessage, response
+from tasks import ceshi
 
 
 hello_bp = RootBlueprint('hello', __name__,  url_prefix='/views/hello')
@@ -29,3 +31,11 @@ def sentry():
     """用来测试 sentry 异常记录框架"""
     division_by_zero = 1 / 0
     return {division_by_zero: division_by_zero}
+
+
+@hello_bp.route('celery', methods=['GET'])
+def celery_views():
+    """用来测验 celery 的效果"""
+    ceshi.celery_task_test.delay()
+    # ceshi.celery_task_test()
+    return response(RetCodeAndMessage.Success)

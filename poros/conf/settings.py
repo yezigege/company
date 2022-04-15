@@ -23,10 +23,10 @@ REDIS_SETTINGS = {
 
 # celery 链接配置
 CELERY_REDIS_SETTINGS = {
-    'host': '127.0.0.1',
+    'host': REDIS_HOST,
     'port': 6379,
     'db': 2,
-    'password': ''
+    'password': REDIS_PSWD
 }
 
 # sentry dsn 配置
